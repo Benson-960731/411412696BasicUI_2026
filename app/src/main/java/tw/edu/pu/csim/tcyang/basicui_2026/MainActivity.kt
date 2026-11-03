@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.DrawableRes
+import androidx.annotation.RawRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,11 +29,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,8 +45,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import tw.edu.pu.csim.tcyang.basicui_2026.ui.theme.BasicUI_2026Theme
 
 class MainActivity : ComponentActivity() {
@@ -70,6 +74,12 @@ fun Main( modifier: Modifier = Modifier) {
         LazyColumnExample(modifier)
         ColumnExample(modifier)
         TextFieldExample(modifier)
+
+
+
+            LazyRowExample(modifier)
+        SimpleVideoPlayer(R.raw.love)
+
     }
 }
 
@@ -83,8 +93,7 @@ fun LazyColumnExample( modifier: Modifier = Modifier) {
 
     ) {
         item { Text("標題列") }
-        items(50){ index ->
-            Text("$index")
+        items(50){ index -> Text("$index")
         }
         item{ Text("結尾列") }
     }
@@ -191,7 +200,8 @@ fun LazyRowExample(modifier: Modifier = Modifier) {
         Animal("狐狸", R.drawable.animal8),
         Animal("小雞", R.drawable.animal9)
     )
-
+}
+/*
     LazyRow(
         modifier = modifier.fillMaxHeight(),
         verticalAlignment = Alignment.CenterVertically
@@ -253,4 +263,42 @@ fun LazyRowExample(modifier: Modifier = Modifier) {
 }
 
 
+ */
+
+@Composable
+fun SimpleVideoPlayer(
+    @RawRes videoRes: Int
+) {
+    val context = LocalContext.current
+
+    // 建立並記住 ExoPlayer 實體，設定影片路徑與自動播放
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            val uri = "android.resource://${context.packageName}/$videoRes"
+            setMediaItem(MediaItem.fromUri(uri))
+            prepare()
+            playWhenReady = true // 載入完成自動播放
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            exoPlayer.release()
+        }
+    }
+
+    //將原生的 PlayerView 嵌入 Compose
+    AndroidView(
+        factory = { ctx ->
+            PlayerView(ctx).apply {
+                player = exoPlayer
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+    )
+
+
+}
 
